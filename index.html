@@ -1,0 +1,91 @@
+<html>
+	<head>
+		<!--
+			The stuff up here is just to get the css page styling
+			and to pull a font that I like
+		-->
+
+		<link rel="stylesheet" href="style.css">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+		<title>
+			VIZA 656 -- Project 2
+		</title>
+		
+		<!--
+			This `script` line imports some WebGL magic from Patricio Gonzalez Vivo's github
+			and allows us to kind of skip setting up the whole 3D aspect. Then
+			we can mostly just copy-paste shadertoy code into our `shader.frag` file.
+
+			You can go to their github to see what they wrote and for a little more
+			information on how it works:
+
+			https://github.com/patriciogonzalezvivo/glslCanvas/
+		-->
+    	<script type="text/javascript" src="https://rawgit.com/patriciogonzalezvivo/glslCanvas/master/dist/GlslCanvas.js"></script>
+
+
+		<!--
+			You can apply css attributes to your canvas
+			element (the block that displays your shader)
+		-->
+		
+		<style>
+			canvas {
+				display: block;
+				width: 100%;
+			}
+    	</style>
+		-->
+
+	</head>
+
+	<body>
+		<div class="bar_padding">
+			<div class="bar">
+				<h2 class="menubar_header">VIZA 656 - Project 2</h2>
+				<div class="menubar">
+					<div class="menubar_elem">
+						<a href="https://people.tamu.edu/~benjaminmoder/index.html" class="menubar_link">Ben's Website</a>
+					</div>
+					<div class="menubar_elem">
+						<a href="http://people.tamu.edu/~gmarenco/index.html" class="menubar_link">Genna's Website</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="content_padding">
+			<div class="content">
+				<h1>Project 2</h1>
+				<p>by Ben Moder and Genna Marenco</p>
+
+				<!--
+					This is the important line for the actual javascript stuff
+					
+					The format is as follows:
+
+					`data-fragment-url` needs to be set to whatever file has your shader code
+					and `data-textures` is a comma-separated list of all the files you want to
+					use as image textures.
+				-->
+    			<canvas id="glslCanvas" class="glslCanvas" data-fragment-url="shader.frag"></canvas>
+				
+				<div class="spacer"></div>
+
+			</div>
+		</div>
+	</body>
+	<!--
+		This script creates the javascript for that canvas element we
+		placed above
+	-->
+	<script>
+		var canvas = document.getElementById("glslCanvas");
+		var sandbox = new GlslCanvas(canvas);
+		
+		// intentionally set the width incorrectly so that
+		// it triggers a resize and scales the resolution properly
+		sandbox.width=200
+	</script>
+</html>

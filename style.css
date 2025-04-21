@@ -1,0 +1,117 @@
+/*
+ * Variables
+ */
+
+:root {
+	/*--primary: #b1e6bf;*/
+	--primary: #7f9ec9;
+	--dark: #333;
+	--dark-fade: #777;
+	--light: white;
+
+	--side-padding: 10%;
+}
+
+
+body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	background-color: var(--dark);
+	font-family: "Poppins", system-ui;
+	color: var(--dark);
+}
+
+b, strong {
+	color: var(--primary);
+}
+
+p.blockquote {
+	padding-left: 4%;
+	color: var(--dark-fade);
+}
+
+/*
+ * Menu Bar Stuff
+ */
+
+.bar_padding {
+	padding: 0;
+	background-color: var(--dark);
+	overflow: hidden;
+	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.bar {
+	margin: 0;
+	padding: 0 var(--side-padding) 0 var(--side-padding);
+}
+
+.menubar_header {
+	color: var(--light);
+	/*top right bottom left*/
+	padding: 0px 10px 0px 16px;
+	margin: 10px 0px 10px 0px;
+	font-size: 2.5em;
+	font-weight: 900;
+}
+
+.menubar_elem {
+	display: inline;
+	float: left;
+	background-color: var(--dark);
+}
+
+.menubar_elem_right {
+	display: inline;
+	float: right;
+	background-color: var(--dark);
+}
+
+.menubar_link {
+	display: block;
+	color: var(--light);
+	text-align: center;
+	padding: 10px 16px 10px 16px;
+	text-decoration: none;
+}
+
+a:hover.menubar_link, .menubar_link_active {
+	display: block;
+	color: var(--dark);
+	background-color: var(--light);
+	text-align: center;
+	padding: 10px 16px 10px 16px;
+	text-decoration: none;
+}
+
+
+/*
+ * Content Stuff
+ */
+
+.content_padding {
+	margin: 0;
+	padding: 0 var(--side-padding) 0 var(--side-padding);
+	background-color: var(--primary);
+}
+
+.content {
+	margin: 0;
+	padding: 20px;
+	background-color: var(--light);
+	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.column {
+	flex: 50%;
+	padding: 0px 20px 0px 20px;
+}
+
+.row {
+	display: flex;
+}
+
+.spacer {
+	padding: 40px 0px 0px 0px;
+}
