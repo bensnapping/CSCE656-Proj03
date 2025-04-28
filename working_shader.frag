@@ -8,7 +8,7 @@ uniform vec2 u_mouse;
 uniform sampler2D u_tex0;
 
 #define NUM_OBJS 5
-#define NUM_SAMPLES 4
+#define NUM_SAMPLES 5
 #define MAX_BOUNCES 3
 
 #define PI 3.14

@@ -5,11 +5,11 @@ precision mediump float;
 uniform float u_time;
 uniform vec2 u_resolution;
 uniform vec2 u_mouse;
-uniform sampler2D u_tex0;
 
 #define NUM_OBJS 5
-#define NUM_SAMPLES 4
-#define MAX_BOUNCES 3
+#define NUM_LOOPS 10
+#define NUM_SAMPLES 10
+#define MAX_BOUNCES 5
 
 #define PI 3.14
 
@@ -122,13 +122,6 @@ vec4 color_mix(vec4 base_col, vec4 top_col, float top_factor){
 
 vec3 pos_along_ray(ray r, float t){
 	return r.origin + (r.dir * t);
-}
-
-float reflectance(float cosine, float refraction_index) {
-	// Use Schlick's approximation for reflectance.
-	float r0 = (1.0 - refraction_index) / (1.0 + refraction_index);
-	r0 = r0*r0;
-	return r0 + (1.0-r0)*pow((1.0 - cosine),5.0);
 }
 
 //
@@ -251,130 +244,34 @@ hit intersect_world(ray r, hittable objs[NUM_OBJS], hittable light_obj){
 	return min_hit;
 }
 
-vec3 get_background_gradient(ray in_ray){
-	vec4 bot_col = vec4(0.18, 0.18, 0.227, 1.0);
-	vec4 top_col = vec4(0.737, 0.365, 0.18, 1.0);
-	
-	//vec4 top_col = vec4(1.0, 1.0, 1.0, 1.0);
-	
-	// top_col = vec4(0.0, 0.0, 0.0, 1.0);
-	// bot_col = vec4(0.0, 0.0, 0.0, 1.0);
-	vec4 gradient = color_mix(bot_col, top_col, 0.2 + (in_ray.dir.y * 0.5));
 
-	return gradient.xyz;
-}
-
-vec3 to_light(hit in_hit, hittable objs[NUM_OBJS], hittable light_obj, int sample_num){
-	// return a pseudo-random direction towards the light source if it's in view
-	// otherwise return vec3(0.0)
-
-	vec3 light_dir = light_obj.center - in_hit.position;
-
-	float rand_comparison = (random( vec2(g_seed) + vec2(float(sample_num)) ) - 0.5) * 10.0;
-
-	if(dot(light_dir, in_hit.normal) > rand_comparison){
-		
-		vec3 jitter_light_dir = 0.1*light_dir + 
-								random_on_hemisphere(in_hit.normal, vec2(g_seed) + vec2(float(sample_num)));
-		
-		hit light_hit = intersect_world(ray(in_hit.position, jitter_light_dir), objs, light_obj);
-
-		if(light_hit.dist > 0.0 && ( light_hit.type == 2 || light_hit.mat.refractive > 0.0 ) ){
-			return jitter_light_dir;
-		}
-
-	}
-
-	return vec3(0.0);
-
-}
-
-
-vec3 sample_trace_path(ray start_ray, hittable objs[NUM_OBJS], hittable light_obj, int sample_num){
+vec3 sample_trace_path(ray start_ray, hittable objs[NUM_OBJS], hittable light_obj){
 	
 	vec3 sample_color = vec3(0.0);
-	vec3 attenuation = vec3(1.0);
+	vec3 factor = vec3(2.0);
 
 	ray cur_ray = start_ray;
 
+	
+
 	for(int bounce = 0; bounce < MAX_BOUNCES; bounce++){
 		hit cur_hit = intersect_world(cur_ray, objs, light_obj);
-		ray next_ray = cur_ray;
 
 		// if we hit something
 		if(cur_hit.dist > 0.0){
-
-			if(cur_hit.type == 2){
-				sample_color = attenuation*cur_hit.mat.color;
-				return sample_color;
-			}
-			
-			if(cur_hit.mat.reflective > 0.0){
-				next_ray = ray(cur_hit.position, cur_hit.reflection);
-			}
 			if(cur_hit.mat.diffuse > 0.0){
-
-				if(cur_hit.mat.color == vec3(1.0)){
-					// do texture mapping
-					
-					float tu = cur_hit.normal.x/2.0 + 0.5;
-					float tv = cur_hit.normal.y/2.0 + 0.5;
-
-					vec4 tex_img = texture2D(u_tex0, vec2(tu, tv));
-
-					attenuation *= tex_img.xyz;
-
-				} else{
-					attenuation *= cur_hit.mat.color;
-				}
-
-
-				vec3 light_dir = to_light(cur_hit, objs, light_obj, sample_num);
-
-				if(light_dir != vec3(0.0)){
-					
-					next_ray = ray(cur_hit.position, light_dir);
-
-				} else{
-					next_ray = ray(cur_hit.position,
-							random_on_hemisphere(cur_hit.normal, vec2(g_seed) + vec2(float(sample_num))));
-
-				}
-				
-
+				sample_color = cur_hit.mat.color;
+				break;
 			}
-			if(cur_hit.mat.refractive > 0.0){
-				float air_ior = 1.0;
-				float sphere_ior = 1.5;
-				float eta = air_ior/sphere_ior;
-
-				vec3 incidence = -cur_ray.dir;
-				
-				float cos_theta = min(1.0, dot(incidence, cur_hit.normal));
-				float sin_theta = sqrt(1.0 - cos_theta*cos_theta);
-
-				bool cannot_refract = (eta * sin_theta > 1.0);
-
-				vec3 out_dir = cur_hit.reflection;
-
-				if(!cannot_refract || reflectance(cos_theta, eta) < random(vec2(g_seed))){
-					vec3 out_perp_component = eta * (incidence + cos_theta * cur_hit.normal);
-					vec3 out_para_component = -sqrt(abs(1.0 - length(out_perp_component)*length(out_perp_component))) *
-													cur_hit.normal;
-
-					out_dir = out_perp_component + out_para_component;
-					
-				}
-
-				next_ray = ray(cur_hit.position, out_dir);
-			}
-
-			cur_ray = next_ray;
-
 
 		// if we hit nothing
 		} else{
-			sample_color = attenuation*0.9*get_background_gradient(cur_ray);
+
+			vec4 top_col = vec4(0.18, 0.18, 0.227, 1.0);
+			vec4 bot_col = vec4(0.737, 0.365, 0.18, 1.0);
+			vec4 gradient = color_mix(bot_col, top_col, 0.5 + (cur_ray.dir.y * 0.5)) * 0.3;
+
+			sample_color += factor * gradient.xyz;
 			return sample_color;
 		}
 
@@ -383,7 +280,6 @@ vec3 sample_trace_path(ray start_ray, hittable objs[NUM_OBJS], hittable light_ob
 	return sample_color;
 
 }
-
 
 void mainImage(out vec4 frag_color, in vec2 frag_coord)
 {
@@ -465,8 +361,8 @@ void mainImage(out vec4 frag_color, in vec2 frag_coord)
 			);
 	material a_mat = material(
 				vec3(0.953, 0.259, 0.075),
-				0.95,
-				0.05,
+				1.0,
+				0.0,
 				0.0
 			);
 	material b_mat = material(
@@ -475,14 +371,8 @@ void mainImage(out vec4 frag_color, in vec2 frag_coord)
 				0.0,
 				0.0
 			);
-	material t_mat = material(
-				vec3(1.0), // if mat.color == vec3(1.0), do texture stuff
-				1.0,
-				0.0,
-				0.0
-			);
 	material light_mat = material(
-				vec3(1.0, 0.6, 0.1),
+				vec3(1.0, 0.992, 0.31),
 				1.0,
 				0.0,
 				0.0
@@ -508,13 +398,13 @@ void mainImage(out vec4 frag_color, in vec2 frag_coord)
 				2.0,
 				light_mat
 			);
-	objs[0] = hittable(					// floor
-				1,						// type: disk
-				vec3(0.0, -2.0, 0.0),	// center
-				vec3(0.0, 1.0, 0.0),	// normal
-				WALL_SIZE,				// radius
-				white_mat				// color
-			);
+	// objs[0] = hittable(					// floor
+	// 			1,						// type: disk
+	// 			vec3(0.0, -2.0, 0.0),	// center
+	// 			vec3(0.0, 1.0, 0.0),	// normal
+	// 			WALL_SIZE,				// radius
+	// 			white_mat				// color
+	// 		);
 	objs[1] = hittable(					// mirror ball
 				0,
 				vec3(4.0, 1.0, -4.0),
@@ -522,27 +412,33 @@ void mainImage(out vec4 frag_color, in vec2 frag_coord)
 				3.0,
 				mirror_mat
 			);
-	objs[2] = hittable(					// texture ball
+	objs[2] = hittable(					// glass ball
 				0,
-				vec3(-8.0, 1.0, -4.0),
+				vec3(4.0, 1.0, -4.0),
 				vec3(0.0, 0.0, 0.0),
 				3.0,
-				t_mat
+				white_mat
 			);
-	objs[3] = hittable(					// red ball
+	objs[3] = hittable(					// orange ball
 				0,
 				vec3(-5.0, 4.0, 6.0),
 				vec3(0.0, 0.0, 0.0),
 				2.0,
 				a_mat
 			);
-	objs[4] = hittable(					// glass ball
+	objs[4] = hittable(					// blue ball
 				0,
 				vec3(-10.0, 1.0, 4.0),
 				vec3(0.0, 0.0, 0.0),
 				3.0,
-				glass_mat
+				b_mat
 			);
+
+	// Background gradient
+	vec4 top_col = vec4(0.3, 0.3, 0.7, 1.0);
+	vec4 bot_col = vec4(0.8, 0.8, 1.0, 1.0);
+	vec4 gradient = color_mix(bot_col, top_col, 0.5 + (pixel_ray.dir.y * 0.5));
+
 
 	//
     // Handle intersections
@@ -551,12 +447,65 @@ void mainImage(out vec4 frag_color, in vec2 frag_coord)
 	vec3 total_color = vec3(0.1);
 
 	
-	// get samples
-	for(int sample_num = 0; sample_num < NUM_SAMPLES; sample_num++){
-		vec3 sample_color = sample_trace_path(pixel_ray, objs, light_sphere, sample_num);
-		total_color += sample_color;
+	// get first intersection
+	hit first_hit = intersect_world(pixel_ray, objs, light_sphere);
+
+	if(first_hit.dist > 0.0){
+	
+		// if light
+		if(first_hit.type == 2){
+			total_color = first_hit.mat.color;
+		} else{
+
+			// if diffuse
+			if(first_hit.mat.diffuse > 0.0){
+
+				vec3 diffuse_color = vec3(0.0);
+
+				int num_loops = NUM_LOOPS;
+				int num_samples = NUM_SAMPLES;
+
+				for(int sample_loop = 0; sample_loop<NUM_LOOPS; sample_loop++){
+					// P = Asin(Theta)+Bcos(Theta)
+					vec3 axis_a = cross(first_hit.normal, up_dir);
+					vec3 axis_b = cross(first_hit.normal, axis_a);
+
+					float mapped_dist = float(sample_loop)/float(num_loops);
+
+					float radius = sqrt(-(mapped_dist * mapped_dist) + mapped_dist);
+
+					for(int sample_num = 0; sample_num<NUM_SAMPLES; sample_num++){
+						float mapped_sample_num = float(sample_num)/float(num_samples);
+						float theta = mapped_sample_num * (2.0 * PI);
+						
+						vec3 point_on_half_sphere = first_hit.position +
+													(first_hit.normal * radius) +
+													(axis_a * sin(theta)) +
+													(axis_b * cos(theta));
+						vec3 sample_dir = point_on_half_sphere - first_hit.position;
+
+						diffuse_color += sample_trace_path(ray(first_hit.position, sample_dir), objs, light_sphere);
+					}
+				}
+
+				diffuse_color /= float(num_loops * num_samples);
+
+				total_color += (diffuse_color * first_hit.mat.diffuse);
+			
+			// if reflective
+			} else if(first_hit.mat.reflective > 0.0){
+
+			// if refractive
+			} else if(first_hit.mat.refractive > 0.0){
+
+			}
+
+		}
+
+	} else{
+
 	}
-	total_color /= float(NUM_SAMPLES);
+
 
 	frag_color = vec4(total_color, 1.0);
 }
