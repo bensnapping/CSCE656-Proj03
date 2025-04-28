@@ -4,7 +4,7 @@ You can run the website locally by running a Node
 instance in a folder with all of these files, or
 you can see the code in action on our class websites:
 - http://people.tamu.edu/~benjaminmoder/viza656/pr02/index.html
-- http://people.tamu.edu/~~gmarenco/viza656/pr02/index.html
+- http://people.tamu.edu/~gmarenco/viza656/pr02/index.html
 
 `index.html` is the main website file that references
 the `shader.frag` file.
